@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      background: #e8f5e9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .quiz-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      text-align: left;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      color: #333;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    h3 {
+      margin: 20px 0 10px;
+      color: #444;
+    }
+
+    .answers {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 25px 0;
+    }
+
+    .answers li {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .answers input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .answers label {
+      cursor: pointer;
+      flex: 1;
+    }
+
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      background: #28a745;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    /* --- Kết quả --- */
+    #result-img {
+      display: none;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    #result-img img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    /* --- Popup Box-up chung --- */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .popup-content {
+      position: relative;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .popup-close:hover {
+      color: red;
+    }
+
+    .popup-content img {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quiz"></div>
+
+  <!-- Nút gợi ý (chỉ hiện ở câu 1) -->
+  <div id="hintButtonContainer" style="display:none;">
+    <button onclick="openHint()">💡 Gợi ý</button>
+  </div>
+
+  <!-- Kết quả -->
+  <div id="result-img">
+    <img id="result-image" src="" alt="Kết quả">
+  </div>
+
+  <!-- Popup khi sai -->
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <span class="popup-close" onclick="closePopup()">×</span>
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/No_Cross_Circle.svg/240px-No_Cross_Circle.svg.png" alt="Sai rồi">
+    </div>
+  </div>
+
+  <!-- Popup gợi ý -->
+  <div class="popup" id="hintPopup">
+    <div class="popup-content">
+      <span class="popup-close" onclick="closeHint()">×</span>
+      <img src="https://i.imgur.com/0DElr0H.jpeg" alt="Gợi ý"> <!-- Thay link ảnh gợi ý ở đây -->
+    </div>
+  </div>
+
+  <script>
+    // Danh sách câu hỏi
+    const questions = [
+      {
+        text: "Những vật chứng khiến bạn nghi ngờ hung thủ?",
+        subtitle: "Hãy chọn những vật chứng, tài liệu, hình ảnh mà khiến bạn nghi ngờ hung thủ của vụ án",
+        groups: [
+          {
+            title: "a. Tài liệu, giấy tờ của vụ án",
+            answers: [
+              "Báo cáo vụ án",
+              "Câu hỏi về nạn nhân",
+              "Lời khai nhân chứng: Nguyễn Văn Hải",
+              "Lời khai nhân chứng: Nguyễn Thị Lan",
+              "Lời khai nhân chứng: Nguyễn Nhật Linh",
+              "Lời khai nghi phạm: Nguyễn Ngọc",
+              "Lời khai nghi phạm: Vũ Hải Yến",
+              "Lời khai nghi phạm: Trần Minh Tiến",
+              "Lời khai nghi phạm: Lại Vũ Bình",
+              "Ảnh hiện trường",
+              "Giám định mẫu vật: Con dao",
+              "Giám định mẫu vật: Dấu giày",
+              "Giám định mẫu vật: Chai Rượu",
+              "Danh sách cuộc gọi cuối của nạn nhân",
+              "Thư tay của người ẩn danh",
+              "Thông tin người có liên quan: Nguyễn Ngọc",
+              "Thông tin người có liên quan: Trần Minh Tiến",
+              "Thông tin người có liên quan: Vũ Hải Yến",
+              "Thông tin người có liên quan: Lại Vũ Bình"
+            ],
+            correct: [13,14,18]
+          },
+          {
+            title: "b. Ảnh vụ án",
+            answers: [
+              "Ảnh Nhân vật",
+              "Ảnh hiện trường",
+              "Ảnh người ẩn danh cung cấp"
+            ],
+            correct: [0,2]
+          }
+        ],
+        next: 1,
+        hasHint: true
+      },
+      {
+        text: "Câu hỏi 2: Ai là Hung thủ đã giết chết nạn nhân?",
+        subtitle: "Hãy chọn người đang nghi nhất",
+        groups: [
+          {
+            title: "",
+            answers: [
+              "Nguyễn Ngọc",
+              "Vũ Hải Yến",
+              "Trần Minh Tiến",
+              "Lại Vũ Bình",
+              "Ninh Quang Long"
+            ],
+            correct: [4]
+          }
+        ],
+        imageLink: "https://github.com/designdaovn/Hosomat-acgiaacbao/raw/main/Gi%E1%BA%A3i%20th%C3%ADch%20m%E1%BB%A5c%20ti%C3%AAu%201.jpeg",
+        hasHint: false
+      }
+    ];
+
+    let current = 0;
+
+    function loadQuestion(index) {
+      const q = questions[index];
+      const container = document.getElementById("quiz");
+
+      let groupsHtml = q.groups.map((group, gIndex) => `
+        <h3>${group.title}</h3>
+        <ul class="answers" id="group${gIndex}">
+          ${group.answers.map((a, i) => `
+            <li>
+              <input type="checkbox" value="${i}" id="g${gIndex}a${i}">
+              <label for="g${gIndex}a${i}">${a}</label>
+            </li>`).join("")}
+        </ul>
+      `).join("");
+
+      container.innerHTML = `
+        <h2>${q.text}</h2>
+        <div class="subtitle">${q.subtitle || ""}</div>
+        ${groupsHtml}
+        <button onclick="checkAnswers()">Kiểm tra đáp án</button>
+      `;
+
+      // Hiện/ẩn nút gợi ý
+      if (q.hasHint) {
+        document.getElementById('hintButtonContainer').style.display = 'block';
+      } else {
+        document.getElementById('hintButtonContainer').style.display = 'none';
+      }
+    }
+
+    function checkAnswers() {
+      const q = questions[current];
+      let allCorrect = true;
+
+      q.groups.forEach((group, gIndex) => {
+        let selected = [];
+        document.querySelectorAll(`#group${gIndex} input[type="checkbox"]:checked`).forEach(cb => {
+          selected.push(parseInt(cb.value));
+        });
+
+        if (selected.length !== group.correct.length) {
+          allCorrect = false;
+          return;
+        }
+
+        selected.sort();
+        let correct = [...group.correct].sort();
+        if (JSON.stringify(selected) !== JSON.stringify(correct)) {
+          allCorrect = false;
+        }
+      });
+
+      if (allCorrect) {
+        if (q.next !== undefined) {
+          current = q.next;
+          loadQuestion(current);
+        } else if (q.imageLink) {
+          // Hiển thị ảnh kết quả ngay trên page
+          document.getElementById('quiz').style.display = 'none';
+          document.getElementById('hintButtonContainer').style.display = 'none';
+          document.getElementById('result-img').style.display = 'block';
+          document.getElementById('result-image').src = q.imageLink;
+        }
+      } else {
+        document.getElementById('popup').style.display = 'flex';
+      }
+    }
+
+    function closePopup() {
+      document.getElementById('popup').style.display = 'none';
+    }
+
+    // Popup gợi ý
+    function openHint() {
+      document.getElementById('hintPopup').style.display = 'flex';
+    }
+    function closeHint() {
+      document.getElementById('hintPopup').style.display = 'none';
+    }
+
+    // Khởi tạo
+    loadQuestion(current);
+  </script>
+</body>
+</html>
