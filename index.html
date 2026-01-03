@@ -13,7 +13,7 @@
     }
 
     .quiz-container {
-      max-width: 800px;
+      max-width: 700px;
       margin: 0 auto;
       background: #fff;
       padding: 25px;
@@ -35,11 +35,6 @@
       text-align: center;
     }
 
-    h3 {
-      margin: 20px 0 10px;
-      color: #444;
-    }
-
     .answers {
       list-style: none;
       padding: 0;
@@ -47,7 +42,7 @@
     }
 
     .answers li {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       display: flex;
       align-items: flex-start;
       gap: 10px;
@@ -64,9 +59,10 @@
       flex: 1;
     }
 
+    /* Nút mặc định (đã chỉnh để cả hai nút có cùng kích thước) */
     button {
       display: block;
-      margin: 10px auto;
+      margin: 0 auto;
       padding: 12px 25px;
       font-size: 16px;
       font-weight: bold;
@@ -76,13 +72,14 @@
       border-radius: 10px;
       cursor: pointer;
       transition: background 0.3s;
+      width: 100%;         /* <-- đảm bảo cùng kích thước */
+      box-sizing: border-box;
     }
 
     button:hover {
       background: #218838;
     }
 
-    /* --- Kết quả --- */
     #result-img {
       display: none;
       margin-top: 30px;
@@ -96,7 +93,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
 
-    /* --- Popup Box-up chung --- */
+    /* --- Popup Box-up khi sai --- */
     .popup {
       display: none;
       position: fixed;
@@ -121,6 +118,11 @@
       text-align: center;
     }
 
+    .popup-content img {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+
     .popup-close {
       position: absolute;
       top: 8px;
@@ -135,191 +137,149 @@
       color: red;
     }
 
-    .popup-content img {
-      max-width: 100%;
+    /* --- Nút Gợi ý: giống nút chính nhưng có 2 dòng text (title + sub) và không có nền, chỉ viền xám --- */
+    .hint-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 15px auto 0;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      background: transparent;    /* không nền */
+      border: 2px solid #555;     /* viền xám đen */
       border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      width: 100%;                /* cùng kích thước với nút kiểm tra */
+      box-sizing: border-box;
+      text-align: center;
+    }
+
+    .hint-box:hover {
+      background: #f8f8f8;        /* hover nhẹ giúp người dùng biết có thể bấm */
+    }
+
+    .hint-title {
+      font-size: 16px;
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .hint-sub {
+      font-size: 12px;
+      color: #777;
+      line-height: 1;
+    }
+
+    /* responsive nhỏ */
+    @media (max-width: 480px) {
+      .quiz-container { padding: 18px; }
     }
   </style>
 </head>
 <body>
-  <div class="quiz-container" id="quiz"></div>
+  <div class="quiz-container" id="quiz">
+    <h2>Địa điểm mà hung thủ muốn đến</h2>
+    <div class="subtitle">(Việc mà hung thủ muốn làm là gì, hắn sẽ đến nơi cần đến)</div>
 
-  <!-- Nút gợi ý (chỉ hiện ở câu 1) -->
-  <div id="hintButtonContainer" style="display:none;">
-    <button onclick="openHint()">💡 Gợi ý</button>
+    <ul class="answers" id="q1">
+      <li><input type="checkbox" value="0" id="ans0"><label for="ans0">Kinh Thành</label></li>
+      <li><input type="checkbox" value="1" id="ans1"><label for="ans1">Quận Thái Bình</label></li>
+      <li><input type="checkbox" value="2" id="ans2"><label for="ans2">Quận Ngọc Lâm</label></li>
+      <li><input type="checkbox" value="3" id="ans3"><label for="ans3">Quận Hà Nam</label></li>
+      <li><input type="checkbox" value="4" id="ans4"><label for="ans4">Quận Phú Yên</label></li>
+      <li><input type="checkbox" value="5" id="ans5"><label for="ans5">Quận Yên Trung</label></li>
+      <li><input type="checkbox" value="6" id="ans6"><label for="ans6">Quận Phong Châu</label></li>
+    </ul>
+
+    <!-- nút kiểm tra đáp án (nguyên bản) -->
+    <button onclick="checkAnswers()">Kiểm tra đáp án</button>
+
+    <!-- nút gợi ý mới (bằng kích thước nút trên, có title + sub) -->
+    <button class="hint-box" onclick="showHintPopup()">
+      <span class="hint-title">Gợi ý</span>
+      <span class="hint-sub">(chỉ sử dụng gợi ý khi đã rất bế tắc)</span>
+    </button>
   </div>
 
-  <!-- Kết quả -->
   <div id="result-img">
     <img id="result-image" src="" alt="Kết quả">
   </div>
 
-  <!-- Popup khi sai -->
+  <!-- Popup hiển thị khi sai (giữ nguyên) -->
   <div class="popup" id="popup">
     <div class="popup-content">
-      <span class="popup-close" onclick="closePopup()">×</span>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/No_Cross_Circle.svg/240px-No_Cross_Circle.svg.png" alt="Sai rồi">
+      <span class="popup-close" onclick="closePopup('popup')">×</span>
+      <img src="https://raw.githubusercontent.com/designdaovn/acgiaacbao-nhiemvu2/refs/heads/main/khi%20chon%20dap%20an%20sai.png" alt="Sai rồi">
     </div>
   </div>
 
-  <!-- Popup gợi ý -->
-  <div class="popup" id="hintPopup">
+  <!-- Popup gợi ý (mới) -->
+  <div class="popup" id="hint-popup">
     <div class="popup-content">
-      <span class="popup-close" onclick="closeHint()">×</span>
-      <img src="https://i.imgur.com/0DElr0H.jpeg" alt="Gợi ý"> <!-- Thay link ảnh gợi ý ở đây -->
+      <span class="popup-close" onclick="closePopup('hint-popup')">×</span>
+      <img id="hint-popup-img" src="" alt="Gợi ý">
     </div>
   </div>
 
   <script>
-    // Danh sách câu hỏi
-    const questions = [
-      {
-        text: "Những vật chứng khiến bạn nghi ngờ hung thủ?",
-        subtitle: "Hãy chọn những vật chứng, tài liệu, hình ảnh mà khiến bạn nghi ngờ hung thủ của vụ án",
-        groups: [
-          {
-            title: "a. Tài liệu, giấy tờ của vụ án",
-            answers: [
-              "Báo cáo vụ án",
-              "Câu hỏi về nạn nhân",
-              "Lời khai nhân chứng: Nguyễn Văn Hải",
-              "Lời khai nhân chứng: Nguyễn Thị Lan",
-              "Lời khai nhân chứng: Nguyễn Nhật Linh",
-              "Lời khai nghi phạm: Nguyễn Ngọc",
-              "Lời khai nghi phạm: Vũ Hải Yến",
-              "Lời khai nghi phạm: Trần Minh Tiến",
-              "Lời khai nghi phạm: Lại Vũ Bình",
-              "Ảnh hiện trường",
-              "Giám định mẫu vật: Con dao",
-              "Giám định mẫu vật: Dấu giày",
-              "Giám định mẫu vật: Chai Rượu",
-              "Danh sách cuộc gọi cuối của nạn nhân",
-              "Thư tay của người ẩn danh",
-              "Thông tin người có liên quan: Nguyễn Ngọc",
-              "Thông tin người có liên quan: Trần Minh Tiến",
-              "Thông tin người có liên quan: Vũ Hải Yến",
-              "Thông tin người có liên quan: Lại Vũ Bình"
-            ],
-            correct: [13,14,18]
-          },
-          {
-            title: "b. Ảnh vụ án",
-            answers: [
-              "Ảnh Nhân vật",
-              "Ảnh hiện trường",
-              "Ảnh người ẩn danh cung cấp"
-            ],
-            correct: [0,2]
-          }
-        ],
-        next: 1,
-        hasHint: true
-      },
-      {
-        text: "Câu hỏi 2: Ai là Hung thủ đã giết chết nạn nhân?",
-        subtitle: "Hãy chọn người đang nghi nhất",
-        groups: [
-          {
-            title: "",
-            answers: [
-              "Nguyễn Ngọc",
-              "Vũ Hải Yến",
-              "Trần Minh Tiến",
-              "Lại Vũ Bình",
-              "Ninh Quang Long"
-            ],
-            correct: [4]
-          }
-        ],
-        imageLink: "https://github.com/designdaovn/Hosomat-acgiaacbao/raw/main/Gi%E1%BA%A3i%20th%C3%ADch%20m%E1%BB%A5c%20ti%C3%AAu%201.jpeg",
-        hasHint: false
-      }
-    ];
-
-    let current = 0;
-
-    function loadQuestion(index) {
-      const q = questions[index];
-      const container = document.getElementById("quiz");
-
-      let groupsHtml = q.groups.map((group, gIndex) => `
-        <h3>${group.title}</h3>
-        <ul class="answers" id="group${gIndex}">
-          ${group.answers.map((a, i) => `
-            <li>
-              <input type="checkbox" value="${i}" id="g${gIndex}a${i}">
-              <label for="g${gIndex}a${i}">${a}</label>
-            </li>`).join("")}
-        </ul>
-      `).join("");
-
-      container.innerHTML = `
-        <h2>${q.text}</h2>
-        <div class="subtitle">${q.subtitle || ""}</div>
-        ${groupsHtml}
-        <button onclick="checkAnswers()">Kiểm tra đáp án</button>
-      `;
-
-      // Hiện/ẩn nút gợi ý
-      if (q.hasHint) {
-        document.getElementById('hintButtonContainer').style.display = 'block';
-      } else {
-        document.getElementById('hintButtonContainer').style.display = 'none';
-      }
-    }
-
     function checkAnswers() {
-      const q = questions[current];
-      let allCorrect = true;
-
-      q.groups.forEach((group, gIndex) => {
-        let selected = [];
-        document.querySelectorAll(`#group${gIndex} input[type="checkbox"]:checked`).forEach(cb => {
-          selected.push(parseInt(cb.value));
-        });
-
-        if (selected.length !== group.correct.length) {
-          allCorrect = false;
-          return;
-        }
-
-        selected.sort();
-        let correct = [...group.correct].sort();
-        if (JSON.stringify(selected) !== JSON.stringify(correct)) {
-          allCorrect = false;
-        }
+      let selected = [];
+      document.querySelectorAll('#q1 input[type="checkbox"]:checked').forEach(cb => {
+        selected.push(parseInt(cb.value));
       });
 
-      if (allCorrect) {
-        if (q.next !== undefined) {
-          current = q.next;
-          loadQuestion(current);
-        } else if (q.imageLink) {
-          // Hiển thị ảnh kết quả ngay trên page
-          document.getElementById('quiz').style.display = 'none';
-          document.getElementById('hintButtonContainer').style.display = 'none';
-          document.getElementById('result-img').style.display = 'block';
-          document.getElementById('result-image').src = q.imageLink;
-        }
+      if (selected.length !== 1) {
+        alert("Bạn phải chọn đúng 1 đáp án!");
+        return;
+      }
+
+      const correct = [4]; // đáp án đúng
+      selected.sort();
+
+      if (JSON.stringify(selected) === JSON.stringify(correct)) {
+        // Nếu đúng → ẩn quiz, hiện ảnh kết quả
+        document.getElementById('quiz').style.display = 'none';
+        document.getElementById('result-img').style.display = 'block';
+        document.getElementById('result-image').src =
+          "https://raw.githubusercontent.com/designdaovn/Kyanlenguyetvien_nhiemvu3/refs/heads/main/Giai%20thich%20copy.jpg";
       } else {
+        // Nếu sai → hiện popup
         document.getElementById('popup').style.display = 'flex';
       }
     }
 
-    function closePopup() {
-      document.getElementById('popup').style.display = 'none';
+    // đóng popup chung (nhận id để dùng cho cả 2 popup)
+    function closePopup(id) {
+      const p = document.getElementById(id);
+      if (p) p.style.display = 'none';
     }
 
-    // Popup gợi ý
-    function openHint() {
-      document.getElementById('hintPopup').style.display = 'flex';
-    }
-    function closeHint() {
-      document.getElementById('hintPopup').style.display = 'none';
+    // hiển thị popup gợi ý (thay HINT_IMAGE_URL bằng link ảnh của bạn)
+    function showHintPopup() {
+      const HINT_IMAGE_URL = "https://raw.githubusercontent.com/designdaovn/Kyanlenguyetvien_nhiemvu3/refs/heads/main/goi%20y%203Artboard%201.jpg";
+      // thay bằng URL ảnh bạn muốn hiển thị trong popup gợi ý
+      document.getElementById('hint-popup-img').src = HINT_IMAGE_URL;
+      document.getElementById('hint-popup').style.display = 'flex';
     }
 
-    // Khởi tạo
-    loadQuestion(current);
+    // đóng popup khi click ra ngoài nội dung popup
+    document.querySelectorAll('.popup').forEach(p => {
+      p.addEventListener('click', (e) => {
+        if (e.target === p) p.style.display = 'none';
+      });
+    });
+
+    // đóng popup bằng phím Esc
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.popup').forEach(p => p.style.display = 'none');
+      }
+    });
   </script>
 </body>
 </html>
